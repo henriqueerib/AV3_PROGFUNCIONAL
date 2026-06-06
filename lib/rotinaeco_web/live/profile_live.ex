@@ -2,161 +2,159 @@ defmodule RotinaecoWeb.ProfileLive do
   use RotinaecoWeb, :live_view
 
   alias Rotinaeco.Accounts
-  alias Rotinaeco.Accounts.User
+  alias Rotinaeco.CheckIns
 
-  def mount(%{"id" => user_id}, _session, socket) do
-    case Accounts.get_user(String.to_integer(user_id)) do
-      nil ->
-        {:ok, redirect(socket, to: "/")}
+  @impl true
+  def mount(_params, _session, socket) do
+    user = socket.assigns.current_scope.user
+    total = Accounts.total_score(user.id)
+    weekly = CheckIns.weekly_score(user.id)
+    form = to_form(Accounts.change_user_profile(user), as: :user)
 
-      user ->
-        changeset = User.profile_changeset(user, %{})
-
-        socket =
-          socket
-          |> assign(user: user)
-          |> assign(changeset: changeset)
-          |> assign(editing: false)
-          |> assign(updated: false)
-          |> assign(error: nil)
-
-        {:ok, socket}
-    end
+    {:ok,
+     assign(socket,
+       user: user,
+       form: form,
+       total_score: total,
+       weekly_score: weekly,
+       editing: false
+     )}
   end
 
-  def handle_event("edit_toggle", _params, socket) do
-    {:noreply, assign(socket, editing: !socket.assigns.editing, updated: false)}
+  @impl true
+  def handle_event("toggle_edit", _params, socket) do
+    form = to_form(Accounts.change_user_profile(socket.assigns.user), as: :user)
+    {:noreply, assign(socket, editing: !socket.assigns.editing, form: form)}
   end
 
-  def handle_event("validate", %{"user" => user_params}, socket) do
-    changeset =
-      socket.assigns.user
-      |> User.profile_changeset(user_params)
+  @impl true
+  def handle_event("validate", %{"user" => params}, socket) do
+    form =
+      Accounts.change_user_profile(socket.assigns.user, params)
       |> Map.put(:action, :validate)
+      |> to_form(as: :user)
 
-    {:noreply, assign(socket, changeset: changeset, error: nil)}
+    {:noreply, assign(socket, form: form)}
   end
 
-  def handle_event("save", %{"user" => user_params}, socket) do
-    case Accounts.update_profile(socket.assigns.user, user_params) do
-      {:ok, updated_user} ->
-        Phoenix.PubSub.broadcast(Rotinaeco.PubSub, "users:#{updated_user.id}", {
-          :profile_updated,
-          updated_user
-        })
+  @impl true
+  def handle_event("save", %{"user" => params}, socket) do
+    case Accounts.update_profile(socket.assigns.user, params) do
+      {:ok, user} ->
+        form = to_form(Accounts.change_user_profile(user), as: :user)
 
         {:noreply,
          socket
-         |> assign(user: updated_user)
-         |> assign(editing: false)
-         |> assign(updated: true)
-         |> assign(changeset: User.profile_changeset(updated_user, %{}))}
+         |> assign(user: user, form: form, editing: false)
+         |> put_flash(:info, "Perfil atualizado com sucesso!")}
 
       {:error, changeset} ->
-        {:noreply, assign(socket, changeset: changeset, error: "Failed to update profile")}
+        {:noreply, assign(socket, form: to_form(changeset, as: :user))}
     end
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-6">
-      <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
-        <div class="flex justify-between items-center mb-6">
-          <h1 class="text-4xl font-bold text-gray-800">Meu Perfil</h1>
-          <button
-            phx-click="edit_toggle"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200"
-          >
-            <%= if @editing, do: "Cancelar", else: "Editar" %>
-          </button>
+    <Layouts.app flash={@flash} current_scope={@current_scope}>
+      <div class="max-w-2xl mx-auto space-y-6">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">Meu Perfil</h1>
+          <p class="text-gray-500 mt-1">Suas informações e estatísticas</p>
         </div>
 
-        <%= if @updated do %>
-          <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-            Perfil atualizado com sucesso!
-          </div>
-        <% end %>
-
-        <%= if @error do %>
-          <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            <%= @error %>
-          </div>
-        <% end %>
-
-        <%= if @editing do %>
-          <form phx-submit="save" phx-change="validate" class="space-y-6">
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Nome</label>
-              <input
-                type="text"
-                name="user[name]"
-                value={Ecto.Changeset.get_field(@changeset, :name) || ""}
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <%= if @changeset.errors[:name] do %>
-                <p class="text-red-600 text-sm mt-1">
-                  <%= error_to_string(@changeset.errors[:name]) %>
-                </p>
-              <% end %>
+        <%!-- Avatar + info card --%>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-start gap-5">
+            <div class="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center text-green-700 font-extrabold text-2xl flex-shrink-0">
+              {String.first(@user.name || "?")}
             </div>
-
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Bio</label>
-              <textarea
-                name="user[bio]"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows="4"
-              ><%= Ecto.Changeset.get_field(@changeset, :bio) || "" %></textarea>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-xl font-bold text-gray-800">{@user.name}</h2>
+              <p class="text-gray-500 text-sm mt-0.5">{@user.email}</p>
+              <p class="text-gray-600 text-sm mt-2 italic">
+                {if @user.bio && @user.bio != "", do: @user.bio, else: "Nenhuma bio adicionada."}
+              </p>
             </div>
-
             <button
-              type="submit"
-              class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+              phx-click="toggle_edit"
+              class={[
+                "flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-colors",
+                if(@editing,
+                  do: "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                  else: "bg-green-600 text-white hover:bg-green-700"
+                )
+              ]}
             >
-              Salvar Alterações
+              {if @editing, do: "Cancelar", else: "Editar perfil"}
             </button>
-          </form>
-        <% else %>
-          <div class="space-y-6">
-            <div class="border-l-4 border-green-500 pl-4">
-              <p class="text-gray-600 text-sm font-semibold">NOME</p>
-              <p class="text-gray-900 text-lg mt-1"><%= @user.name %></p>
-            </div>
+          </div>
+        </div>
 
-            <div class="border-l-4 border-blue-500 pl-4">
-              <p class="text-gray-600 text-sm font-semibold">EMAIL</p>
-              <p class="text-gray-900 text-lg mt-1"><%= @user.email %></p>
-            </div>
+        <%!-- Stats --%>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+            <p class="text-sm text-gray-500 mb-1">Pontuação total</p>
+            <p class="text-3xl font-extrabold text-green-600">{@total_score}</p>
+            <p class="text-xs text-gray-400 mt-1">pontos acumulados</p>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+            <p class="text-sm text-gray-500 mb-1">Esta semana</p>
+            <p class="text-3xl font-extrabold text-blue-600">{@weekly_score}</p>
+            <p class="text-xs text-gray-400 mt-1">pontos semanais</p>
+          </div>
+        </div>
 
-            <div class="border-l-4 border-purple-500 pl-4">
-              <p class="text-gray-600 text-sm font-semibold">BIO</p>
-              <p class="text-gray-900 text-lg mt-1">
-                <%= if @user.bio do %>
-                  <%= @user.bio %>
-                <% else %>
-                  <span class="text-gray-400 italic">Nenhuma bio adicionada</span>
-                <% end %>
-              </p>
-            </div>
+        <%!-- Edit form --%>
+        <%= if @editing do %>
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Editar informações</h2>
 
-            <div class="border-l-4 border-yellow-500 pl-4">
-              <p class="text-gray-600 text-sm font-semibold">MEMBRO DESDE</p>
-              <p class="text-gray-900 text-lg mt-1">
-                <%= DateTime.to_date(@user.inserted_at) |> to_string() %>
-              </p>
-            </div>
+            <.form
+              for={@form}
+              id="profile-form"
+              phx-change="validate"
+              phx-submit="save"
+              class="space-y-4"
+            >
+              <.input field={@form[:name]} type="text" label="Nome completo" />
+              <.input
+                field={@form[:bio]}
+                type="textarea"
+                label="Bio"
+                placeholder="Fale sobre você e seus hábitos sustentáveis..."
+              />
+              <div class="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  class="px-5 py-2.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                  phx-disable-with="Salvando..."
+                >
+                  Salvar alterações
+                </button>
+                <button
+                  type="button"
+                  phx-click="toggle_edit"
+                  class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </.form>
           </div>
         <% end %>
-      </div>
-    </div>
-    """
-  end
 
-  defp error_to_string(error) do
-    case error do
-      {msg, _opts} when is_binary(msg) -> msg
-      msg when is_binary(msg) -> msg
-      _ -> "Erro de validação"
-    end
+        <%!-- Settings link --%>
+        <div class="text-center">
+          <.link
+            navigate={~p"/users/settings"}
+            class="text-sm text-gray-500 hover:text-green-600 hover:underline"
+          >
+            Configurações da conta (alterar e-mail e senha) →
+          </.link>
+        </div>
+      </div>
+    </Layouts.app>
+    """
   end
 end

@@ -1,18 +1,22 @@
-# Rotinaeco
+# EcoHabits
 
-To start your Phoenix server:
+Aplicação web desenvolvida com Elixir/Phoenix para a disciplina T300 - Programação Funcional.
 
-* Run `mix setup` to install and setup dependencies
-* Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+O EcoHabits permite que usuários registrem e acompanhem hábitos sustentáveis do cotidiano, acumulando pontos e visualizando o engajamento da comunidade em tempo real.
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+## Como executar
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+```bash
+mix setup
+mix phx.server
+```
 
-## Learn more
+Acesse `http://localhost:4000`.
 
-* Official website: https://www.phoenixframework.org/
-* Guides: https://hexdocs.pm/phoenix/overview.html
-* Docs: https://hexdocs.pm/phoenix
-* Forum: https://elixirforum.com/c/phoenix-forum
-* Source: https://github.com/phoenixframework/phoenix
+## Tecnologias
+
+- Elixir / Phoenix 1.8
+- Phoenix LiveView
+- Ecto + PostgreSQL
+- Tailwind CSS
+- Phoenix PubSub
