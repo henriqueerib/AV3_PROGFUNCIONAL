@@ -7,7 +7,6 @@ defmodule RotinaecoWeb.UserAuth do
   alias Rotinaeco.Accounts
   alias Rotinaeco.Accounts.Scope
 
-  # Cookie de "lembrar-me" válido por 14 dias
   @max_cookie_age_in_days 14
   @remember_me_cookie "_rotinaeco_web_user_remember_me"
   @remember_me_options [
@@ -16,12 +15,8 @@ defmodule RotinaecoWeb.UserAuth do
     same_site: "Lax"
   ]
 
-  # Token de sessão renovado a cada 7 dias
   @session_reissue_age_in_days 7
 
-  @doc """
-  Faz o login do usuário, redirecionando para a página de origem ou para o dashboard.
-  """
   def log_in_user(conn, user, params \\ %{}) do
     user_return_to = get_session(conn, :user_return_to)
 
@@ -30,9 +25,6 @@ defmodule RotinaecoWeb.UserAuth do
     |> redirect(to: user_return_to || signed_in_path(conn))
   end
 
-  @doc """
-  Faz o logout do usuário, limpando a sessão e o cookie de autenticação.
-  """
   def log_out_user(conn) do
     user_token = get_session(conn, :user_token)
     user_token && Accounts.delete_user_session_token(user_token)
@@ -47,9 +39,6 @@ defmodule RotinaecoWeb.UserAuth do
     |> redirect(to: ~p"/")
   end
 
-  @doc """
-  Plug que busca o usuário autenticado pela sessão ou cookie de "lembrar-me".
-  """
   def fetch_current_scope_for_user(conn, _opts) do
     with {token, conn} <- ensure_user_token(conn),
          {user, token_inserted_at} <- Accounts.get_user_by_session_token(token) do
@@ -75,7 +64,6 @@ defmodule RotinaecoWeb.UserAuth do
     end
   end
 
-  # Renova o token de sessão se ele for mais antigo que o prazo configurado
   defp maybe_reissue_user_session_token(conn, user, token_inserted_at) do
     token_age = DateTime.diff(DateTime.utc_now(:second), token_inserted_at, :day)
 
@@ -86,7 +74,6 @@ defmodule RotinaecoWeb.UserAuth do
     end
   end
 
-  # Cria ou estende a sessão do usuário, salvando o token na sessão e no cookie
   defp create_or_extend_session(conn, user, params) do
     token = Accounts.generate_user_session_token(user)
     remember_me = get_session(conn, :user_remember_me)
@@ -97,12 +84,10 @@ defmodule RotinaecoWeb.UserAuth do
     |> maybe_write_remember_me_cookie(token, params, remember_me)
   end
 
-  # Não renova a sessão se o usuário já estiver logado (evita erros de CSRF)
   defp renew_session(conn, user) when conn.assigns.current_scope.user.id == user.id do
     conn
   end
 
-  # Renova o ID da sessão e limpa os dados para evitar ataques de fixação de sessão
   defp renew_session(conn, _user) do
     delete_csrf_token()
 
@@ -131,9 +116,6 @@ defmodule RotinaecoWeb.UserAuth do
     |> put_session(:live_socket_id, user_session_topic(token))
   end
 
-  @doc """
-  Desconecta as sessões existentes para os tokens fornecidos.
-  """
   def disconnect_sessions(tokens) do
     Enum.each(tokens, fn %{token: token} ->
       RotinaecoWeb.Endpoint.broadcast(user_session_topic(token), "disconnect", %{})
@@ -142,13 +124,6 @@ defmodule RotinaecoWeb.UserAuth do
 
   defp user_session_topic(token), do: "users_sessions:#{Base.url_encode64(token)}"
 
-  @doc """
-  Callback `on_mount` para LiveViews: carrega o usuário autenticado no socket.
-
-  - `:mount_current_scope` — carrega o usuário se houver sessão ativa
-  - `:require_authenticated` — redireciona para login se não estiver autenticado
-  - `:require_sudo_mode` — exige reautenticação recente (usado em configurações)
-  """
   def on_mount(:mount_current_scope, _params, session, socket) do
     {:cont, mount_current_scope(socket, session)}
   end
@@ -197,12 +172,8 @@ defmodule RotinaecoWeb.UserAuth do
     end)
   end
 
-  @doc "Retorna o caminho padrão após o login."
   def signed_in_path(_), do: ~p"/dashboard"
 
-  @doc """
-  Plug para rotas que exigem autenticação. Redireciona para login se não autenticado.
-  """
   def require_authenticated_user(conn, _opts) do
     if conn.assigns.current_scope && conn.assigns.current_scope.user do
       conn

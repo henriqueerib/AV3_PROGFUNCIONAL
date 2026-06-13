@@ -14,10 +14,6 @@ defmodule Rotinaeco.CheckIns.CheckIn do
     timestamps(type: :utc_datetime)
   end
 
-  @doc """
-  Changeset para criar um check-in.
-  Valida campos obrigatórios e impede duplicidade (mesmo usuário, hábito e data).
-  """
   def changeset(check_in, attrs) do
     check_in
     |> cast(attrs, [:date])

@@ -17,14 +17,12 @@ defmodule RotinaecoWeb.Router do
     plug :accepts, ["json"]
   end
 
-  # Public routes
   scope "/", RotinaecoWeb do
     pipe_through :browser
 
     get "/", PageController, :home
   end
 
-  # Routes that mount the current user (but don't require auth)
   scope "/", RotinaecoWeb do
     pipe_through :browser
 
@@ -41,7 +39,6 @@ defmodule RotinaecoWeb.Router do
     delete "/users/log-out", UserSessionController, :delete
   end
 
-  # Authenticated routes
   scope "/", RotinaecoWeb do
     pipe_through [:browser, :require_authenticated_user]
 
