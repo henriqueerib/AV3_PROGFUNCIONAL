@@ -80,7 +80,6 @@ defmodule RotinaecoWeb.UserAuthTest do
         |> assign(:current_scope, Scope.for_user(user))
         |> UserAuth.log_in_user(user)
 
-      # When already logged in (same user), redirects to signed_in_path = /dashboard
       assert redirected_to(conn) == ~p"/dashboard"
     end
 
@@ -96,9 +95,6 @@ defmodule RotinaecoWeb.UserAuthTest do
         |> fetch_cookies()
         |> init_test_session(%{user_remember_me: true})
 
-      # the conn is already logged in and has the remember_me cookie set,
-      # now we log in again and even without explicitly setting remember_me,
-      # the cookie should be set again
       conn = conn |> UserAuth.log_in_user(user, %{})
       assert %{value: signed_token, max_age: max_age} = conn.resp_cookies[@remember_me_cookie]
       assert signed_token != get_session(conn, :user_token)

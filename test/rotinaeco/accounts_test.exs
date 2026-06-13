@@ -72,7 +72,6 @@ defmodule Rotinaeco.AccountsTest do
       {:error, changeset} = Accounts.register_user(%{email: email})
       assert "has already been taken" in errors_on(changeset).email
 
-      # Now try with the uppercased email too, to check that email case is ignored.
       {:error, changeset} = Accounts.register_user(%{email: String.upcase(email)})
       assert "has already been taken" in errors_on(changeset).email
     end
@@ -95,13 +94,11 @@ defmodule Rotinaeco.AccountsTest do
       assert Accounts.sudo_mode?(%User{authenticated_at: DateTime.add(now, -19, :minute)})
       refute Accounts.sudo_mode?(%User{authenticated_at: DateTime.add(now, -21, :minute)})
 
-      # minute override
       refute Accounts.sudo_mode?(
                %User{authenticated_at: DateTime.add(now, -11, :minute)},
                -10
              )
 
-      # not authenticated
       refute Accounts.sudo_mode?(%User{})
     end
   end
@@ -264,7 +261,6 @@ defmodule Rotinaeco.AccountsTest do
       assert user_token.context == "session"
       assert user_token.authenticated_at != nil
 
-      # Creating the same token for another user should fail
       assert_raise Ecto.ConstraintError, fn ->
         Repo.insert!(%UserToken{
           token: user_token.token,
@@ -332,8 +328,6 @@ defmodule Rotinaeco.AccountsTest do
 
   describe "login_user_by_magic_link/1" do
     test "confirms user and expires tokens" do
-      # With password-based registration, magic link for unconfirmed users with
-      # a password set is not allowed. Test the confirmed user path instead.
       user = user_fixture()
       assert user.confirmed_at
       {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
@@ -345,13 +339,11 @@ defmodule Rotinaeco.AccountsTest do
       assert user.confirmed_at
       {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
       assert {:ok, {^user, []}} = Accounts.login_user_by_magic_link(encoded_token)
-      # one time use only
       assert {:error, :not_found} = Accounts.login_user_by_magic_link(encoded_token)
     end
 
     test "raises when unconfirmed user has password set" do
       user = unconfirmed_user_fixture()
-      # unconfirmed_user_fixture now creates users with a password
       assert user.hashed_password != nil
       {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
 

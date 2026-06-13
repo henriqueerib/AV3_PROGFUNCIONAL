@@ -1,14 +1,11 @@
 defmodule Rotinaeco.AccountsFixtures do
-  @moduledoc """
-  This module defines test helpers for creating
-  entities via the `Rotinaeco.Accounts` context.
-  """
 
   import Ecto.Query
 
   alias Rotinaeco.Accounts
   alias Rotinaeco.Accounts.Scope
 
+  @spec unique_user_email() :: <<_::64, _::_*8>>
   def unique_user_email, do: "user#{System.unique_integer()}@example.com"
   def valid_user_password, do: "hello world!"
 
@@ -32,7 +29,6 @@ defmodule Rotinaeco.AccountsFixtures do
   def user_fixture(attrs \\ %{}) do
     user = unconfirmed_user_fixture(attrs)
 
-    # Confirm the user directly without magic link
     Rotinaeco.Repo.update_all(
       from(u in Rotinaeco.Accounts.User, where: u.id == ^user.id),
       set: [confirmed_at: DateTime.utc_now(:second)]

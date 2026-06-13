@@ -5,13 +5,11 @@ alias Rotinaeco.Accounts
 alias Rotinaeco.Habits
 alias Rotinaeco.CheckIns
 
-# Limpar dados existentes (ordem importa por causa das FKs)
 Repo.delete_all(Rotinaeco.CheckIns.CheckIn)
 Repo.delete_all(Rotinaeco.Habits.Habit)
 Repo.delete_all(Rotinaeco.Accounts.UserToken)
 Repo.delete_all(Rotinaeco.Accounts.User)
 
-# Criar usuários
 {:ok, ana} =
   Accounts.register_user(%{
     name: "Ana Silva",
@@ -28,13 +26,11 @@ Repo.delete_all(Rotinaeco.Accounts.User)
     bio: "Ciclista urbano e defensor do transporte limpo."
   })
 
-# Confirmar os usuários (para não precisar de magic link)
 Repo.update_all(
   from(u in Rotinaeco.Accounts.User, where: u.id in [^ana.id, ^joao.id]),
   set: [confirmed_at: DateTime.utc_now(:second)]
 )
 
-# Criar hábitos
 {:ok, habito1} =
   Habits.create_habit(ana, %{
     "name" => "Separar lixo reciclável",
@@ -75,21 +71,17 @@ Repo.update_all(
     "points" => 12
   })
 
-# Criar check-ins de exemplo
 today = Date.utc_today()
 yesterday = Date.add(today, -1)
 two_days_ago = Date.add(today, -2)
 
-# Check-ins da Ana
 CheckIns.create_check_in(ana, habito1)
 CheckIns.create_check_in(ana, habito2)
 CheckIns.create_check_in(ana, habito5)
 
-# Check-ins do João
 CheckIns.create_check_in(joao, habito3)
 CheckIns.create_check_in(joao, habito4)
 
-# Check-ins em datas anteriores (inserindo diretamente para evitar unicidade do mesmo dia)
 Repo.insert!(%Rotinaeco.CheckIns.CheckIn{
   user_id: ana.id,
   habit_id: habito1.id,
