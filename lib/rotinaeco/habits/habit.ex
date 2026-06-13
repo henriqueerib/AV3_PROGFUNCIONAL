@@ -19,9 +19,6 @@ defmodule Rotinaeco.Habits.Habit do
 
   def categories, do: @categories
 
-  @doc """
-  Changeset para criar ou atualizar um hábito.
-  """
   def changeset(habit, attrs) do
     habit
     |> cast(attrs, [:name, :description, :category, :points])

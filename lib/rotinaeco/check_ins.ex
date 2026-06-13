@@ -7,15 +7,8 @@ defmodule Rotinaeco.CheckIns do
 
   @topic "community_feed"
 
-  @doc """
-  Retorna o tópico PubSub do feed da comunidade.
-  """
   def topic, do: @topic
 
-  @doc """
-  Registra um check-in para o usuário e hábito informados.
-  Em caso de sucesso, transmite o evento via PubSub para o feed da comunidade.
-  """
   def create_check_in(user, habit, attrs \\ %{}) do
     attrs_with_date = Map.put_new(attrs, "date", Date.utc_today())
 
@@ -43,9 +36,6 @@ defmodule Rotinaeco.CheckIns do
     end
   end
 
-  @doc """
-  Retorna os check-ins mais recentes de todos os usuários (feed da comunidade).
-  """
   def recent_check_ins(limit \\ 20) do
     Repo.all(
       from c in CheckIn,
@@ -55,9 +45,6 @@ defmodule Rotinaeco.CheckIns do
     )
   end
 
-  @doc """
-  Retorna todos os check-ins de um usuário específico.
-  """
   def list_check_ins_for_user(user_id) do
     Repo.all(
       from c in CheckIn,
@@ -67,9 +54,6 @@ defmodule Rotinaeco.CheckIns do
     )
   end
 
-  @doc """
-  Retorna a pontuação total do usuário na semana atual.
-  """
   def weekly_score(user_id) do
     inicio_da_semana = Date.beginning_of_week(Date.utc_today())
 
@@ -82,10 +66,6 @@ defmodule Rotinaeco.CheckIns do
     ) || 0
   end
 
-  @doc """
-  Retorna a pontuação por semana das últimas N semanas.
-  Cada entrada é um mapa com %{week_label: "DD/MM", score: inteiro}.
-  """
   def weekly_scores(user_id, semanas \\ 4) do
     hoje = Date.utc_today()
 

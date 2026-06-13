@@ -1,22 +1,9 @@
 defmodule RotinaecoWeb.CoreComponents do
-  @moduledoc """
-  Componentes de UI reutilizáveis da aplicação.
-
-  Contém os componentes base usados em todos os templates: inputs, flash,
-  tabelas, ícones e outros elementos comuns. Estilizados com Tailwind CSS.
-  """
   use Phoenix.Component
   use Gettext, backend: RotinaecoWeb.Gettext
 
   alias Phoenix.LiveView.JS
 
-  @doc """
-  Renderiza notificações flash.
-
-  ## Exemplos
-
-      <.flash kind={:info} flash={@flash} />
-  """
   attr :id, :string, doc: "the optional id of flash container"
   attr :flash, :map, default: %{}, doc: "the map of flash messages to display"
   attr :title, :string, default: nil
@@ -58,9 +45,6 @@ defmodule RotinaecoWeb.CoreComponents do
     """
   end
 
-  @doc """
-  Renderiza um botão com suporte a navegação.
-  """
   attr :rest, :global, include: ~w(href navigate patch method download name value disabled)
   attr :class, :any
   attr :variant, :string, values: ~w(primary)
@@ -85,10 +69,6 @@ defmodule RotinaecoWeb.CoreComponents do
     end
   end
 
-  @doc """
-  Renderiza um campo de input com label e mensagens de erro.
-  Aceita todos os tipos HTML: text, email, password, select, textarea, checkbox, etc.
-  """
   attr :id, :any, default: nil
   attr :name, :any
   attr :label, :string, default: nil
@@ -204,7 +184,6 @@ defmodule RotinaecoWeb.CoreComponents do
     """
   end
 
-  # Demais inputs: text, datetime-local, url, password, etc.
   def input(assigns) do
     ~H"""
     <div class="fieldset mb-2">
@@ -227,7 +206,6 @@ defmodule RotinaecoWeb.CoreComponents do
     """
   end
 
-  # Componente auxiliar para exibir erros de formulário
   defp error(assigns) do
     ~H"""
     <p class="mt-1.5 flex gap-2 items-center text-sm text-error">
@@ -236,9 +214,6 @@ defmodule RotinaecoWeb.CoreComponents do
     """
   end
 
-  @doc """
-  Renderiza um cabeçalho com título.
-  """
   slot :inner_block, required: true
   slot :subtitle
   slot :actions
@@ -257,9 +232,6 @@ defmodule RotinaecoWeb.CoreComponents do
     """
   end
 
-  @doc """
-  Renderiza uma tabela com estilo padrão.
-  """
   attr :id, :string, required: true
   attr :rows, :list, required: true
   attr :row_id, :any, default: nil, doc: "the function for generating the row id"
@@ -314,9 +286,6 @@ defmodule RotinaecoWeb.CoreComponents do
     """
   end
 
-  @doc """
-  Renderiza uma lista de dados.
-  """
   slot :item, required: true do
     attr :title, :string, required: true
   end
@@ -335,9 +304,6 @@ defmodule RotinaecoWeb.CoreComponents do
     """
   end
 
-  @doc """
-  Renderiza um ícone Heroicon pelo nome (ex: `hero-x-mark`).
-  """
   attr :name, :string, required: true
   attr :class, :any, default: "size-4"
 
@@ -346,8 +312,6 @@ defmodule RotinaecoWeb.CoreComponents do
     <span class={[@name, @class]} />
     """
   end
-
-  ## JS Commands
 
   def show(js \\ %JS{}, selector) do
     JS.show(js,
@@ -370,9 +334,6 @@ defmodule RotinaecoWeb.CoreComponents do
     )
   end
 
-  @doc """
-  Traduz uma mensagem de erro usando gettext.
-  """
   def translate_error({msg, opts}) do
     if count = opts[:count] do
       Gettext.dngettext(RotinaecoWeb.Gettext, "errors", msg, msg, count, opts)
@@ -381,9 +342,6 @@ defmodule RotinaecoWeb.CoreComponents do
     end
   end
 
-  @doc """
-  Traduz todos os erros de um campo a partir de uma lista de erros.
-  """
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end

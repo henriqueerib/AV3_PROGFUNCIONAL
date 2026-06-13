@@ -4,7 +4,6 @@ defmodule Rotinaeco.Accounts.UserNotifier do
   alias Rotinaeco.Mailer
   alias Rotinaeco.Accounts.User
 
-  # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do
     email =
       new()
@@ -18,9 +17,6 @@ defmodule Rotinaeco.Accounts.UserNotifier do
     end
   end
 
-  @doc """
-  Envia instruções para alterar o e-mail do usuário.
-  """
   def deliver_update_email_instructions(user, url) do
     deliver(user.email, "Instruções para alterar e-mail", """
 
@@ -38,9 +34,6 @@ defmodule Rotinaeco.Accounts.UserNotifier do
     """)
   end
 
-  @doc """
-  Envia instruções de acesso via link mágico.
-  """
   def deliver_login_instructions(user, url) do
     case user do
       %User{confirmed_at: nil} -> deliver_confirmation_instructions(user, url)

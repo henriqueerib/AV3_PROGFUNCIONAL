@@ -12,7 +12,6 @@ defmodule RotinaecoWeb.UserSessionController do
     create(conn, params, "Bem-vindo de volta!")
   end
 
-  # magic link login
   defp create(conn, %{"user" => %{"token" => token} = user_params}, info) do
     case Accounts.login_user_by_magic_link(token) do
       {:ok, {user, tokens_to_disconnect}} ->
@@ -29,7 +28,6 @@ defmodule RotinaecoWeb.UserSessionController do
     end
   end
 
-  # email + password login
   defp create(conn, %{"user" => user_params}, info) do
     %{"email" => email, "password" => password} = user_params
 
@@ -38,7 +36,6 @@ defmodule RotinaecoWeb.UserSessionController do
       |> put_flash(:info, info)
       |> UserAuth.log_in_user(user, user_params)
     else
-      # Evitar enumeração de usuários: não revelar se o e-mail está cadastrado
       conn
       |> put_flash(:error, "Credenciais inválidas")
       |> put_flash(:email, String.slice(email, 0, 160))
@@ -51,7 +48,6 @@ defmodule RotinaecoWeb.UserSessionController do
     true = Accounts.sudo_mode?(user)
     {:ok, {_user, expired_tokens}} = Accounts.update_user_password(user, user_params)
 
-    # desconectar todas as sessões LiveView ativas com a senha antiga
     UserAuth.disconnect_sessions(expired_tokens)
 
     conn

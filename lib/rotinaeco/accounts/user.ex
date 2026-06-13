@@ -17,9 +17,6 @@ defmodule Rotinaeco.Accounts.User do
     timestamps(type: :utc_datetime)
   end
 
-  @doc """
-  Changeset de cadastro. Valida nome, e-mail e senha.
-  """
   def registration_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:name, :email, :password, :bio])
@@ -29,9 +26,6 @@ defmodule Rotinaeco.Accounts.User do
     |> validate_password(opts)
   end
 
-  @doc """
-  Changeset para edição do perfil (nome e bio).
-  """
   def profile_changeset(user, attrs) do
     user
     |> cast(attrs, [:name, :bio])
@@ -40,9 +34,6 @@ defmodule Rotinaeco.Accounts.User do
     |> validate_length(:bio, max: 500)
   end
 
-  @doc """
-  Changeset para alteração de e-mail.
-  """
   def email_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:email])
@@ -76,9 +67,6 @@ defmodule Rotinaeco.Accounts.User do
     end
   end
 
-  @doc """
-  Changeset para alteração de senha.
-  """
   def password_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:password])
@@ -107,17 +95,11 @@ defmodule Rotinaeco.Accounts.User do
     end
   end
 
-  @doc """
-  Marca a conta como confirmada definindo o campo `confirmed_at`.
-  """
   def confirm_changeset(user) do
     now = DateTime.utc_now(:second)
     change(user, confirmed_at: now)
   end
 
-  @doc """
-  Verifica se a senha informada corresponde ao hash armazenado.
-  """
   def valid_password?(%Rotinaeco.Accounts.User{hashed_password: hashed_password}, password)
       when is_binary(hashed_password) and byte_size(password) > 0 do
     Pbkdf2.verify_pass(password, hashed_password)
