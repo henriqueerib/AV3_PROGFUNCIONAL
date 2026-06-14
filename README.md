@@ -1,4 +1,4 @@
-# 🌱 RotinaEco
+# 🌱 EcoHabits
 
 Aplicação web desenvolvida com **Elixir + Phoenix** para a disciplina **T300 — Programação Funcional**.
 
